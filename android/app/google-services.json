@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "262880009344",
+    "project_id": "job-trekker-36752",
+    "storage_bucket": "job-trekker-36752.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:262880009344:android:257536940f900f53b55a65",
+        "android_client_info": {
+          "package_name": "com.example.job_trekker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "262880009344-hipvqdeec162msq0lhn2g2q665ft097o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLVLAiL0kXbhQD0vmeDChd7fFxJ6g3az4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "262880009344-hipvqdeec162msq0lhn2g2q665ft097o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
