@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // Removed com.google.gms.google-services to prevent crash when json is missing
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -17,7 +16,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {

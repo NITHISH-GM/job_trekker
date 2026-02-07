@@ -33,7 +33,7 @@ class DashboardScreen extends ConsumerWidget {
               stretch: true,
               backgroundColor: theme.scaffoldBackgroundColor,
               surfaceTintColor: Colors.transparent,
-              title: Text(AppStrings.dashboard, 
+              title: Text(AppStrings.dashboard,
                 style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: -1.5)),
             ),
             SliverPadding(
@@ -45,7 +45,7 @@ class DashboardScreen extends ConsumerWidget {
                   if (isSyncing || (stats['total'] ?? 0) > 0) ...[
                     _buildSectionHeader(context, 'Intelligence Overview'),
                     const SizedBox(height: 20),
-                    isSyncing 
+                    isSyncing
                       ? _buildSkeletonAnalytics(context)
                       : _buildAnalyticsCard(context, stats),
                     const SizedBox(height: 32),
@@ -62,7 +62,7 @@ class DashboardScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  isSyncing 
+                  isSyncing
                     ? _buildSkeletonList(context)
                     : const RecentApplicationsList(),
                   const SizedBox(height: 100),
@@ -78,8 +78,8 @@ class DashboardScreen extends ConsumerWidget {
         child: FloatingActionButton.extended(
           elevation: 4,
           onPressed: isSyncing ? null : () => ref.read(gmailSyncProvider.notifier).syncEmails(),
-          backgroundColor: isSyncing 
-              ? theme.colorScheme.surfaceVariant 
+          backgroundColor: isSyncing
+              ? theme.colorScheme.surfaceVariant
               : theme.colorScheme.primary,
           label: Row(
             children: [
@@ -114,7 +114,7 @@ class DashboardScreen extends ConsumerWidget {
   Widget _buildAnalyticsCard(BuildContext context, Map<String, int> stats) {
     final theme = Theme.of(context);
     return Container(
-      height: 220, // Reduced height
+      height: 220,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
@@ -146,7 +146,7 @@ class DashboardScreen extends ConsumerWidget {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.3, // Taller cards
+      childAspectRatio: 1.3,
       mainAxisSpacing: 16,
       crossAxisSpacing: 16,
       children: [
@@ -187,7 +187,7 @@ class DashboardScreen extends ConsumerWidget {
           PieChartSectionData(
             value: item['value'].toDouble(),
             color: item['color'],
-            radius: 55, // Reduced radius
+            radius: 55,
             title: '${item['label']} ${item['value']}',
             titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white),
             badgeWidget: _buildBadge(item['color']),
@@ -210,6 +210,7 @@ class DashboardScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: color, shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 4)],
       ),
     );
   }
@@ -312,7 +313,7 @@ class RecentApplicationsList extends ConsumerWidget {
                       width: 44, height: 44,
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
                         child: Text(app.companyName.isNotEmpty ? app.companyName[0] : '?', 
@@ -364,13 +365,13 @@ class _CompactStatusChip extends StatelessWidget {
     Color color;
     switch (status) {
       case ApplicationStatus.applied: color = const Color(0xFF0061FF); break;
+      case ApplicationStatus.underReview: color = const Color(0xFF5856D6); break;
       case ApplicationStatus.interview: color = const Color(0xFFFF9500); break;
+      case ApplicationStatus.assessment: color = const Color(0xFF007AFF); break;
       case ApplicationStatus.selected: color = const Color(0xFF34C759); break;
       case ApplicationStatus.rejected: color = const Color(0xFFFF3B30); break;
       case ApplicationStatus.personal: color = const Color(0xFF5856D6); break;
       case ApplicationStatus.expired: color = const Color(0xFF8E8E93); break;
-      case ApplicationStatus.underReview: color = const Color(0xFF5856D6); break;
-      case ApplicationStatus.assessment: color = const Color(0xFF007AFF); break;
       default: color = Colors.grey;
     }
     return Container(
