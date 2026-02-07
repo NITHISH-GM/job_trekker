@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   
-  // Explicitly defining all necessary scopes for Gmail access
   static const List<String> _scopes = [
     'https://www.googleapis.com/auth/gmail.readonly',
     'email',
@@ -23,12 +22,12 @@ class AuthService {
 
   Future<UserCredential?> signInWithGoogle({Function(String)? onError}) async {
     try {
-      // Force account selection to refresh token and permissions
+      // Clear previous session to ensure fresh scopes
       await _googleSignIn.signOut();
       
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        if (onError != null) onError('Sign-in cancelled');
+        if (onError != null) onError('Sign-in was cancelled.');
         return null;
       }
 
@@ -42,25 +41,38 @@ class AuthService {
       return await _auth.signInWithCredential(credential);
     } catch (e) {
       debugPrint('AUTH ERROR: $e');
-      if (onError != null) onError(e.toString());
+      if (onError != null) onError('Authentication failed: ${e.toString()}');
       return null;
     }
   }
 
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
-    await _auth.signOut();
+    try {
+      await _googleSignIn.signOut();
+      await _auth.signOut();
+    } catch (e) {
+      debugPrint('LOGOUT ERROR: $e');
+    }
   }
 
   Future<Map<String, String>?> getAuthHeaders() async {
-    GoogleSignInAccount? user = _googleSignIn.currentUser;
-    // Attempt to refresh user session silently if null
-    user ??= await _googleSignIn.signInSilently();
-    
-    if (user == null) {
-      debugPrint('AUTH SERVICE: No user found for headers');
+    try {
+      GoogleSignInAccount? user = _googleSignIn.currentUser;
+      
+      // Attempt silent sign in to refresh the token if it's expired
+      user ??= await _googleSignIn.signInSilently();
+      
+      if (user == null) {
+        debugPrint('AUTH SERVICE: No active user session found.');
+        return null;
+      }
+      
+      final headers = await user.authHeaders;
+      debugPrint('AUTH SERVICE: Successfully retrieved auth headers.');
+      return headers;
+    } catch (e) {
+      debugPrint('AUTH HEADER ERROR: $e');
       return null;
     }
-    return await user.authHeaders;
   }
 }

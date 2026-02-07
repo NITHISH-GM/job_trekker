@@ -14,7 +14,7 @@ class ApplicationDetailsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Details', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Application Details', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
@@ -188,8 +188,16 @@ class ApplicationDetailsScreen extends StatelessWidget {
         Icon(icon, size: 22, color: theme.colorScheme.primary.withOpacity(0.7)),
         const SizedBox(width: 16),
         Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5))),
-        const Spacer(),
-        Text(value, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ),
       ],
     );
   }

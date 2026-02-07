@@ -33,7 +33,7 @@ class GmailSyncNotifier extends StateNotifier<bool> {
       final headers = await authService.getAuthHeaders();
 
       if (headers == null) {
-        debugPrint('Gmail Sync: ERROR - No Auth Headers.');
+        debugPrint('Gmail Sync: ERROR - No Auth Headers found.');
         state = false;
         return;
       }
@@ -41,12 +41,8 @@ class GmailSyncNotifier extends StateNotifier<bool> {
       final gmailService = GmailService(headers);
       final repository = ref.read(applicationRepositoryProvider);
 
-      // To make it robust, we'll fetch latest 100 regardless of lastSyncTime if the repo is small,
-      // but we use lastSyncTime to skip already processed ones efficiently.
-      DateTime? lastSyncTime = ref.read(lastSyncTimeProvider);
-      final messages = await gmailService.fetchEmails(maxResults: 100, since: lastSyncTime);
-
-      debugPrint('Gmail Sync: Fetched ${messages.length} headers.');
+      final messages = await gmailService.fetchEmails(maxResults: 100);
+      debugPrint('Gmail Sync: Retrieved ${messages.length} message headers from Gmail API.');
 
       if (messages.isEmpty) {
          _updateSyncMetadata();
@@ -55,32 +51,41 @@ class GmailSyncNotifier extends StateNotifier<bool> {
       }
 
       int newItemsCount = 0;
-      final List<gmail.Message> toProcess = [];
+      int processedCount = 0;
+      final List<gmail.Message> messagesToProcess = [];
       
       for (var msg in messages) {
         if (msg.id == null) continue;
         final exists = repository.getAllApplications().any((a) => a.gmailMessageId == msg.id);
-        if (!exists) toProcess.add(msg);
+        if (!exists) messagesToProcess.add(msg);
       }
 
-      debugPrint('Gmail Sync: ${toProcess.length} new messages to analyze.');
+      debugPrint('Gmail Sync: ${messagesToProcess.length} messages are new and need analysis.');
 
-      // Process in batches
-      for (int i = 0; i < toProcess.length; i += 5) {
-        final end = (i + 5 < toProcess.length) ? i + 5 : toProcess.length;
-        final batch = toProcess.sublist(i, end);
+      if (messagesToProcess.isEmpty) {
+        debugPrint('Gmail Sync: All fetched messages are already in database.');
+        _updateSyncMetadata();
+        state = false;
+        return;
+      }
+
+      for (int i = 0; i < messagesToProcess.length; i += 3) {
+        final end = (i + 3 < messagesToProcess.length) ? i + 3 : messagesToProcess.length;
+        final batch = messagesToProcess.sublist(i, end);
         
-        final List<Future<bool>> tasks = batch.map((msg) =>
+        final List<Future<bool>> batchTasks = batch.map((msg) => 
           _processMessage(gmailService, msg.id!, repository)
         ).toList();
 
-        final results = await Future.wait(tasks);
+        final results = await Future.wait(batchTasks);
         newItemsCount += results.where((r) => r).length;
+        processedCount += batch.length;
         
-        await Future.delayed(const Duration(milliseconds: 100));
+        debugPrint('Gmail Sync: Progress - $processedCount/${messagesToProcess.length} analyzed.');
+        await Future.delayed(const Duration(milliseconds: 300));
       }
 
-      debugPrint('Gmail Sync: COMPLETE. Added $newItemsCount new items.');
+      debugPrint('Gmail Sync: SUCCESS. Imported $newItemsCount new items.');
       _updateSyncMetadata();
       _autoExpireApplications();
 
@@ -100,8 +105,10 @@ class GmailSyncNotifier extends StateNotifier<bool> {
       String accountEmail = 'me';
       if (headers != null) {
         try {
-          final found = headers.where((h) => h.name?.toLowerCase() == 'to');
-          if (found.isNotEmpty) accountEmail = found.first.value ?? 'me';
+          final toHeaders = headers.where((h) => h.name?.toLowerCase() == 'to');
+          if (toHeaders.isNotEmpty) {
+            accountEmail = toHeaders.first.value ?? 'me';
+          }
         } catch (_) {}
       }
 
@@ -176,28 +183,25 @@ class GmailSyncNotifier extends StateNotifier<bool> {
     String body = _extractBody(payload);
     String fullContent = '$subject $body'.toLowerCase();
 
-    // Premium Filtering Logic: Scoring
+    if (from.contains('newsletter') || from.contains('notification') || from.contains('social')) return null;
+    if (fullContent.contains('receipt') || fullContent.contains('invoice') || fullContent.contains('subscription') || fullContent.contains('billed')) return null;
+
     int jobScore = 0;
     int collegeScore = 0;
 
-    final jobWords = ['application', 'interview', 'offer', 'hiring', 'career', 'internship', 'job', 'position', 'shortlisted', 'recruitment', 'candidate'];
-    final collegeWords = ['college', 'university', 'student', 'professor', 'exam', 'lecture', 'assignment', 'campus', 'semester', 'result', 'admit card', 'degree'];
+    final jobWords = ['application', 'interview', 'offer', 'hiring', 'career', 'internship', 'job', 'position', 'shortlisted', 'recruitment', 'candidate', 'cv', 'resume'];
+    final collegeWords = ['college', 'university', 'student', 'professor', 'exam', 'lecture', 'assignment', 'campus', 'semester', 'result', 'admit card', 'degree', 'faculty'];
 
     for (var w in jobWords) { if (fullContent.contains(w)) jobScore++; }
     for (var w in collegeWords) { if (fullContent.contains(w)) collegeScore++; }
 
+    if (jobScore == 0 && collegeScore == 0) return null;
+
     bool isPersonal = collegeScore > jobScore || from.toLowerCase().contains('.edu');
-    bool isRelevant = jobScore > 0 || collegeScore > 0;
-
-    if (!isRelevant) return null;
-
-    // Filter noise
-    if (from.contains('newsletter') || from.contains('notification') || from.contains('social')) return null;
-    if (fullContent.contains('receipt') || fullContent.contains('invoice') || fullContent.contains('subscription')) return null;
 
     String companyName = _extractCompany(from);
-    String role = isPersonal ? 'Academic Item' : _extractRole(subject, body);
-
+    String role = isPersonal ? 'Academic Notification' : _extractRole(subject, body);
+    
     final dateApplied = _parseDate(dateStr);
 
     return JobApplication(
@@ -214,7 +218,7 @@ class GmailSyncNotifier extends StateNotifier<bool> {
       location: _extractLocation(body),
       salary: _extractSalary(body),
       timeline: [
-        ApplicationEvent(date: dateApplied, title: isPersonal ? 'Mail Received' : 'Application Detected', description: subject),
+        ApplicationEvent(date: dateApplied, title: isPersonal ? 'Log Cataloged' : 'Application Found', description: subject),
       ],
       isPersonal: isPersonal,
     );
@@ -235,7 +239,8 @@ class GmailSyncNotifier extends StateNotifier<bool> {
   String _extractCompany(String from) {
     if (from.contains('<')) {
       String name = from.split('<')[0].trim();
-      return name.replaceAll('"', '').isEmpty ? from : name.replaceAll('"', '');
+      name = name.replaceAll('"', '');
+      return name.isEmpty ? from : name;
     }
     return from;
   }
@@ -266,10 +271,17 @@ class GmailSyncNotifier extends StateNotifier<bool> {
 
   ApplicationStatus _determineStatus(String subject, String body) {
     final s = (subject + body).toLowerCase();
-    if (s.contains('offer') || s.contains('congratulations')) return ApplicationStatus.selected;
-    if (s.contains('interview') || s.contains('schedule') || s.contains('call')) return ApplicationStatus.interview;
-    if (s.contains('rejected') || s.contains('unfortunately')) return ApplicationStatus.rejected;
-    if (s.contains('assessment') || s.contains('test')) return ApplicationStatus.assessment;
+    
+    // Strict Offer checks
+    if ((s.contains('offer') || s.contains('congratulations') || s.contains('selected')) && 
+        !s.contains('payment') && !s.contains('subscription')) {
+      return ApplicationStatus.selected;
+    }
+    
+    if (s.contains('interview') || s.contains('schedule') || s.contains('call') || s.contains('invite')) return ApplicationStatus.interview;
+    if (s.contains('unfortunately') || s.contains('rejected') || s.contains('not moving forward')) return ApplicationStatus.rejected;
+    if (s.contains('assessment') || s.contains('test') || s.contains('assignment')) return ApplicationStatus.assessment;
+    if (s.contains('reviewing') || s.contains('processing')) return ApplicationStatus.underReview;
     return ApplicationStatus.applied;
   }
 }
