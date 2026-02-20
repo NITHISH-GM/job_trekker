@@ -1,15 +1,16 @@
-# 🚀 Job Trekker
+
+# 📩Job Trekker
 
 <div align="center">
 
-![Job Trekker Logo](https://via.placeholder.com/200x200?text=Job+Trekker)
+![Job Trekker Logo](https://github.com/NITHISH-GM/job_trekker/blob/8ca3d9699b32d37576a30d1ca23aa919ad02f739/web/micon.png)
 
-**A Modern Job Search & Career Tracking Application**
+**A Modern Career Tracking Application**
 
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Stars](https://img.shields.io/github/stars/NITHISH-GM/job_trekker?style=for-the-badge)](https://github.com/NITHISH-GM/job_trekker)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
 
@@ -41,19 +42,7 @@ Job Trekker is a comprehensive mobile application built with **Flutter** that he
 | **CMake** | Build System (8.3%) |
 | **Swift** | iOS Integration (2.4%) |
 
----
 
-## 📸 Screenshots
-
-<div align="center">
-
-| Feature | Screenshot |
-|---------|-----------|
-| Home Screen | ![Home](https://via.placeholder.com/300x600?text=Home+Screen) |
-| Job Search | ![Search](https://via.placeholder.com/300x600?text=Job+Search) |
-| Application Tracker | ![Tracker](https://via.placeholder.com/300x600?text=App+Tracker) |
-
-</div>
 
 ---
 
@@ -70,6 +59,7 @@ Job Trekker is a comprehensive mobile application built with **Flutter** that he
 ### Installation
 
 1. **Clone the repository**
+   
    ```bash
    git clone https://github.com/NITHISH-GM/job_trekker.git
    cd job_trekker
